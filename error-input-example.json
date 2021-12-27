@@ -1,0 +1,94 @@
+{
+  "Items":
+  [
+    {
+      "name": "oval hat",
+      "type": "hats",
+      "prices": [
+        {
+          "priceFor": "regular",
+          "price": 20000
+        },
+        {
+          "priceFor": "VIP",
+          "price": 15000
+        }
+      ]
+    }, {
+      "name": "oval hat",
+      "type": "hats",
+      "prices": [
+        {
+          "priceFor": "regular",
+          "price": 30000
+        },
+        {
+          "priceFor": "VIP",
+          "price": 20000
+        },
+        {
+          "priceFor": "wholesale",
+          "price": 15000				
+        }
+      ]
+    }, {
+      "name": "magic shirt",
+      "type": "tops",
+      "prices": [
+        {
+          "priceFor": "regular",
+          "price": 50000
+        }
+      ]
+    }, {
+      "name": "tanpa reg",
+      "type": "tops",
+      "prices": [
+        {
+          "priceFor": "VIP",
+          "price": 50000
+        }
+      ]
+    }
+  ],
+  "Buyers":
+  [
+    {
+      "name": "Ani",
+      "type": "regular"
+    }, {
+      "name": "Ani",
+      "type": "VIP"
+    }, {
+      "name": "Ani",
+      "type": "regular"
+    }, {
+      "name": "Dipta",
+      "type": "wholesale"
+    }
+  ],
+  "Transaction":
+  [
+    {
+      "item": "magic shirt",
+      "qty": 1,
+      "buyer": "Ani"
+    }, {
+      "item": "square hat",
+      "qty": 2,
+      "buyer": "Budi"
+    }, {
+      "item": "magic shirt",
+      "qty": 1,
+      "buyer": "Ani"
+    }, {
+      "item": "oval hat",
+      "qty": 1,
+      "buyer": "Ani"
+    }, {
+      "item": "square hat",
+      "qty": 100,
+      "buyer": "Dipta"
+    }
+  ]
+}
