@@ -10,9 +10,13 @@ npm run dev
 ```
 yarn dev
 ```
-### The result will be print out as console and expected to be like 
+### The result will be print out as
 ```
-output-example.json
+console.log
+```
+#### and
+```
+output.json
 ```
 ### Else there's some error on the input-example.json that restricted to
 1. Buyer name must be unique

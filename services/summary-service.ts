@@ -1,7 +1,9 @@
-import { IBuyer, IInput, IRpc, IBestSpender, IItem, ITransaction } from "../types"
+import { IBuyer, IInput, IRpc, IBestSpender, IItem, ITransaction, IPrice } from "../types"
 import BuyerService from "./buyer-service"
 import ItemService from "./item-service"
 import TransactionService from "./transaction-service"
+
+let fs = require('fs');
 
 export default class SummaryService {
   buyers: IBuyer[]
@@ -40,16 +42,49 @@ export default class SummaryService {
 
       this.totalTransaction = this.transactions.length
 
+      this.assignNewProps()
       this.bestItem()
+      this.revenuePerCat()
+      this.calculateRevenue()
+      this.findBestSpenders()
       this.print()
+      this.printJson()
     }
   }
   print() {
     console.log({
-      totalTransaction: this.totalTransaction,
-      bestSellingItem: this.bestSellingItem,
-      bestSellingCategory: this.bestSellingCategory
-    })
+      "Summary": {
+        totalTransaction: this.totalTransaction,
+        bestSellingItem: this.bestSellingItem,
+        bestSellingCategory: this.bestSellingCategory,
+        rpc: this.rpc,
+        revenue: this.revenue,
+        bestSpenders: this.bestSpenders
+      }
+    }
+    )
+  }
+
+  printJson() {
+    fs.unlink('output.json', function (err: any) {
+      if (err) throw err;
+      console.log('File deleted!');
+    });
+    fs.appendFile('output.json', JSON.stringify(
+      {
+        "Summary": {
+          totalTransaction: this.totalTransaction,
+          bestSellingItem: this.bestSellingItem,
+          bestSellingCategory: this.bestSellingCategory,
+          rpc: this.rpc,
+          revenue: this.revenue,
+          bestSpenders: this.bestSpenders
+        }
+      }, null, 4
+    ), function (err: any) {
+      if (err) throw err;
+      console.log('Saved!');
+    });
   }
 
   bestItem() {
@@ -89,5 +124,105 @@ export default class SummaryService {
     })
   }
 
+  assignNewProps() {
+    this.transactions.forEach((transaction: ITransaction) => {
+      const buyerType = this.buyers.find((buyer: IBuyer) => buyer.name === transaction.buyer)?.type;
+      const itemDesc = this.items.find((item: IItem) => item.name === transaction.item)
+      const matchedPrice = itemDesc?.prices.find((price: IPrice) => price.priceFor === buyerType)
+      const regularPrice = itemDesc?.prices.find((price: IPrice) => price.priceFor === 'regular')
+
+      transaction.type = buyerType
+      transaction.category = itemDesc?.type
+      if (matchedPrice) {
+        transaction.priceFor = matchedPrice.priceFor,
+          transaction.price = matchedPrice.price
+      } else {
+        transaction.priceFor = regularPrice?.priceFor || "regular",
+          transaction.price = regularPrice?.price || 0
+      }
+    })
+  }
+
+  revenuePerCat() {
+    let tempHats: any = []
+    let tempTops: any = []
+    let tempShorts: any = []
+    const reducer = (prevValue: number, currentValue: number) => prevValue + currentValue
+    this.transactions.forEach((transaction: ITransaction) => {
+      const hats = transaction.category === 'hats'
+      const tops = transaction.category === 'tops'
+      const shorts = transaction.category === 'shorts'
+      if (hats) {
+        tempHats.push(transaction.price! * transaction.qty)
+      }
+      if (tops) {
+        tempTops.push(transaction.price! * transaction.qty)
+      }
+      if (shorts) {
+        tempShorts.push(transaction.price! * transaction.qty)
+      }
+    });
+
+    this.rpc.push({
+      category: 'hats',
+      revenue: tempHats.length ? tempHats.reduce(reducer) : 0
+    },
+      {
+        category: 'tops',
+        revenue: tempTops.length ? tempTops.reduce(reducer) : 0
+      },
+      {
+        category: 'shorts',
+        revenue: tempShorts.length ? tempShorts.reduce(reducer) : 0
+      })
+  }
+
+  calculateRevenue() {
+    let temp: any = []
+    const reducer = (prevValue: number, currentValue: number) => prevValue + currentValue
+    this.rpc.forEach((e: any) => {
+      temp.push(e.revenue)
+    });
+    this.revenue = (temp.reduce(reducer))
+  }
+
+  findBestSpenders() {
+    let results: IBestSpender[] = [];
+
+    this.transactions.forEach((transaction, index) => {
+      let buyerExists = false;
+
+      if (index === 0) {
+        results.push({
+          name: transaction.buyer,
+          type: transaction.type || 'regular',
+          spent: transaction.qty * transaction.price!,
+        });
+      } else {
+        /* check if item exists in results */
+        for (let result of results) {
+          if (result.name === transaction.buyer) {
+            buyerExists = true;
+          }
+        }
+        /* */
+
+        if (buyerExists) {
+          let trxIndex = results.findIndex((el) => el.name === transaction.buyer);
+          results[trxIndex].spent += transaction.qty * transaction.price!;
+        } else {
+          results.push({
+            name: transaction.buyer,
+            type: transaction.type || 'regular',
+            spent: transaction.qty * transaction.price!,
+          });
+        }
+      }
+    });
+
+    this.bestSpenders = results.sort((a, b) => b.spent - a.spent)
+
+  };
 
 }
+
